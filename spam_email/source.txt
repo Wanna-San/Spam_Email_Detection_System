@@ -1,0 +1,3 @@
+https://www.kaggle.com/datasets/kuladeep19/phishing-and-legitimate-emails-dataset?select=phishing_legit_dataset_KD_10000.csv
+
+https://www.kaggle.com/datasets/jackksoncsie/spam-email-dataset?resource=download&select=emails.csv

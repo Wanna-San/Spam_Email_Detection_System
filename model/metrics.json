@@ -1,0 +1,15 @@
+{
+  "accuracy": 0.9939,
+  "macro_precision": 0.98,
+  "macro_recall": 0.9941,
+  "macro_f1_score": 0.9868,
+  "test_rows": 3093,
+  "labels": [
+    "ham",
+    "phishing",
+    "spam"
+  ],
+  "max_tokens": 30000,
+  "sequence_length": 300,
+  "epochs": 15
+}

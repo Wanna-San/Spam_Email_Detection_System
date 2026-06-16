@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Shield AI - Spam & Phishing Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../static/home.css">
+</head>
+<body>
+    <div class="page">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                    <h2 class="brand-title">Email Shield AI</h2>
+                    <p class="brand-subtitle">Ham, spam, and phishing classification</p>
+                </div>
+            </div>
+            <div class="status-pill">
+                <span class="status-dot"></span>
+                <span id="statusText">Model Connected & Active</span>
+            </div>
+        </header>
+
+        <main class="layout">
+            <section class="hero">
+                <p class="eyebrow">Neural Network Inference Engine</p>
+                <h1>Analyze emails instantly.</h1>
+                <p class="intro">Paste the raw headers or body text of any suspicious message. The TensorFlow model separates ham, spam, and phishing email.</p>
+
+                <div class="form-panel">
+                    <label for="emailText">Email Content</label>
+                    <textarea id="emailText" placeholder="Paste your email text here..." required></textarea>
+
+                    <div class="actions">
+                        <p class="helper">Inference runs against your saved TensorFlow model.</p>
+                        <div class="button-row">
+                            <button type="button" class="btn btn-secondary" onclick="clearInput()">Clear</button>
+                            <button type="button" class="btn btn-primary" id="scanBtn" onclick="checkEmail()">Scan Email</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="alertBox" class="message"></div>
+            </section>
+
+            <aside class="insights">
+                <div id="resultCard" class="result">
+                    <p class="result-label">Analysis Result</p>
+                    <h3 id="resultTitle" class="result-title">Awaiting Input</h3>
+                    <p id="resultDetail" class="result-detail">Paste an email on the left and click "Scan Email" to start processing.</p>
+                </div>
+
+                <div class="metric-grid">
+                    <div class="metric">
+                        <span>Analysis Mode</span>
+                        <strong id="modelKindVal">TensorFlow Keras</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Inference Latency</span>
+                        <strong id="latencyVal">-- ms</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Category</span>
+                        <strong id="categoryVal">--</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Predicted Class</span>
+                        <strong id="classVal">--</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Ham Probability</span>
+                        <strong id="hamVal">--</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Spam Probability</span>
+                        <strong id="spamVal">--</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Phishing Probability</span>
+                        <strong id="phishingVal">--</strong>
+                    </div>
+                    <div class="metric">
+                        <span>Model Accuracy</span>
+                        <strong id="accuracyVal">--</strong>
+                    </div>
+                </div>
+
+                <ul class="tips">
+                    <li><strong>Ham</strong> means normal email content.</li>
+                    <li><strong>Spam</strong> means unsolicited bulk or promotional email.</li>
+                    <li><strong>Phishing</strong> means credential theft, fake account alerts, or financial impersonation.</li>
+                </ul>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+        function clearInput() {
+            document.getElementById("emailText").value = "";
+            resetUI();
+        }
+
+        function resetUI() {
+            document.getElementById("resultCard").className = "result";
+            document.getElementById("resultTitle").innerText = "Awaiting Input";
+            document.getElementById("resultDetail").innerText = 'Paste an email on the left and click "Scan Email" to start processing.';
+            document.getElementById("latencyVal").innerText = "-- ms";
+            document.getElementById("modelKindVal").innerText = "TensorFlow Keras";
+            document.getElementById("categoryVal").innerText = "--";
+            document.getElementById("classVal").innerText = "--";
+            document.getElementById("hamVal").innerText = "--";
+            document.getElementById("spamVal").innerText = "--";
+            document.getElementById("phishingVal").innerText = "--";
+            document.getElementById("accuracyVal").innerText = "--";
+            document.getElementById("alertBox").className = "message";
+            document.getElementById("alertBox").innerText = "";
+        }
+
+        function checkEmail() {
+            const text = document.getElementById("emailText").value.trim();
+            const scanBtn = document.getElementById("scanBtn");
+            const alertBox = document.getElementById("alertBox");
+            const card = document.getElementById("resultCard");
+            const title = document.getElementById("resultTitle");
+            const detail = document.getElementById("resultDetail");
+            const latencyVal = document.getElementById("latencyVal");
+            const modelKindVal = document.getElementById("modelKindVal");
+            const categoryVal = document.getElementById("categoryVal");
+            const classVal = document.getElementById("classVal");
+            const hamVal = document.getElementById("hamVal");
+            const spamVal = document.getElementById("spamVal");
+            const phishingVal = document.getElementById("phishingVal");
+            const accuracyVal = document.getElementById("accuracyVal");
+
+            if (!text) {
+                alertBox.className = "message error show";
+                alertBox.innerText = "Please provide some email text to analyze.";
+                return;
+            }
+
+            alertBox.className = "message info show";
+            alertBox.innerText = "Vectorizing input tokens and running model inference...";
+            scanBtn.disabled = true;
+            scanBtn.innerText = "Scanning...";
+
+            const startTime = performance.now();
+
+            fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: text })
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Backend server error");
+                return res.json();
+            })
+            .then(data => {
+                const latency = Math.round(performance.now() - startTime);
+                const probabilities = data.all_probabilities || {};
+                const hamProbability = probabilityValue(probabilities.ham ?? data.ham_probability);
+                const spamProbability = probabilityValue(probabilities.spam ?? probabilities.spam_or_phishing ?? data.spam_probability);
+                const phishingProbability = probabilityValue(probabilities.phishing);
+
+                latencyVal.innerText = `${latency} ms`;
+                modelKindVal.innerText = data.model_kind === "multiclass"
+                    ? "TensorFlow Keras 3-class"
+                    : "TensorFlow Keras binary";
+                categoryVal.innerText = data.category;
+                classVal.innerText = formatClassName(data.label);
+                hamVal.innerText = formatPercent(hamProbability);
+                spamVal.innerText = formatPercent(spamProbability);
+                phishingVal.innerText = formatPercent(phishingProbability);
+                accuracyVal.innerText = data.model_accuracy === null || data.model_accuracy === undefined
+                    ? "--"
+                    : `${(data.model_accuracy * 100).toFixed(2)}%`;
+
+                alertBox.className = "message show info";
+                alertBox.innerText = "Inference completed successfully.";
+                card.className = "result";
+
+                if (data.label === "phishing") {
+                    card.classList.add("danger");
+                    title.innerText = "Phishing Threat Detected";
+                    detail.innerText = "This email matches patterns associated with high-risk spoofing and credential theft campaigns. Do not click any links.";
+                } else if (data.label === "spam") {
+                    card.classList.add("warning");
+                    title.innerText = "Spam Email Detected";
+                    detail.innerText = "This text reads like bulk unsolicited communication. It may contain tracking pixels or promotional links.";
+                } else {
+                    card.classList.add("safe");
+                    title.innerText = "Ham / Safe Email";
+                    detail.innerText = "The model classified this message as ham, meaning it does not look like spam or phishing.";
+                }
+            })
+            .catch(err => {
+                alertBox.className = "message error show";
+                alertBox.innerText = `Error: ${err.message}. Ensure backend is running.`;
+                card.className = "result";
+                title.innerText = "System Offline";
+                detail.innerText = "Could not communicate with the TensorFlow backend application server.";
+            })
+            .finally(() => {
+                scanBtn.disabled = false;
+                scanBtn.innerText = "Scan Email";
+            });
+        }
+
+        function probabilityValue(value) {
+            const parsed = Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+        }
+
+        function formatPercent(value) {
+            return value === null ? "--" : `${(value * 100).toFixed(1)}%`;
+        }
+
+        function formatClassName(label) {
+            if (label === "ham") return "Ham";
+            if (label === "spam") return "Spam";
+            if (label === "phishing") return "Phishing";
+            return label || "--";
+        }
+    </script>
+</body>
+</html>
