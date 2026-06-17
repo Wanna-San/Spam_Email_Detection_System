@@ -64,7 +64,7 @@ def predict_email(email_text):
         if spam_score >= 0.7 or phishing_score >= 3:
             label = "phishing"
             result = "Phishing Email"
-            category = "Spam"
+            category = "Phishing"
         elif spam_score >= 0.5:
             label = "spam"
             result = "Spam Email"
@@ -113,7 +113,7 @@ def predict_email(email_text):
 
     if label == "phishing":
         result = "Phishing Email"
-        category = "Spam"
+        category = "Phishing"
     elif label == "spam":
         result = "Spam Email"
         category = "Spam"
